@@ -2,60 +2,206 @@
 
 BluetoothSerial SerialBT;
 
-// New "Easy-to-Find" Pins
-const int IN1 = 18; 
-const int IN2 = 19; 
-const int IN3 = 21; 
-const int IN4 = 22; 
+// ============================================
+// L298N MOTOR DRIVER
+// ============================================
+#define ENA 22
+#define IN1 25
+#define IN2 26
 
-int motorSpeed = 220; 
+#define IN3 32
+#define IN4 33
+#define ENB 23
 
+// ============================================
+// IR SENSORS
+// ============================================
+#define S1 13
+#define S2 14
+#define S3 34
+#define S4 35
+#define S5 27
+
+// ============================================
+// LIMIT SWITCH
+// ============================================
+#define CLP 16
+
+// ============================================
+// MOTOR SPEED
+// ============================================
+int motorSpeed = 180;
+
+
+// ============================================
+// SETUP
+// ============================================
 void setup() {
+
   Serial.begin(115200);
-  SerialBT.begin("ESP32_Car_NewPins"); 
+
+  // Bluetooth name
+  SerialBT.begin("ESP32_ROBOT");
+
+  Serial.println("Bluetooth Started");
+  Serial.println("Connect to: ESP32_ROBOT");
+
+  // Motor pins
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
 
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
-  stopCar();
-  Serial.println("Bluetooth Started! Use Pins 18, 19, 21, 22.");
+  // Sensors
+  pinMode(S1, INPUT);
+  pinMode(S2, INPUT);
+  pinMode(S3, INPUT);
+  pinMode(S4, INPUT);
+  pinMode(S5, INPUT);
+
+  pinMode(CLP, INPUT);
+
+  stopMotor();
 }
 
+
+// ============================================
+// LOOP
+// ============================================
 void loop() {
+
   if (SerialBT.available()) {
+
     char command = SerialBT.read();
-    
-    if (command == 'F') moveForward();
-    else if (command == 'B') moveBackward();
-    else if (command == 'L') turnLeft();
-    else if (command == 'R') turnRight();
-    else if (command == 'S') stopCar();
+
+    Serial.print("Command: ");
+    Serial.println(command);
+
+
+    // FORWARD
+    if (command == 'F' || command == 'f') {
+
+      forward();
+      SerialBT.println("FORWARD");
+    }
+
+
+    // BACKWARD
+    else if (command == 'B' || command == 'b') {
+
+      backward();
+      SerialBT.println("BACKWARD");
+    }
+
+
+    // LEFT
+    else if (command == 'L' || command == 'l') {
+
+      turnLeft();
+      SerialBT.println("LEFT");
+    }
+
+
+    // RIGHT
+    else if (command == 'R' || command == 'r') {
+
+      turnRight();
+      SerialBT.println("RIGHT");
+    }
+
+
+    // STOP
+    else if (command == 'S' || command == 's') {
+
+      stopMotor();
+      SerialBT.println("STOP");
+    }
   }
 }
 
-void moveForward() {
-  analogWrite(IN1, motorSpeed); analogWrite(IN2, 0);
-  analogWrite(IN3, motorSpeed); analogWrite(IN4, 0);
+
+// ============================================
+// FORWARD
+// ============================================
+void forward() {
+
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
 }
 
-void moveBackward() {
-  analogWrite(IN1, 0); analogWrite(IN2, motorSpeed);
-  analogWrite(IN3, 0); analogWrite(IN4, motorSpeed);
+
+// ============================================
+// BACKWARD
+// ============================================
+void backward() {
+
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
 }
 
+
+// ============================================
+// LEFT
+// ============================================
 void turnLeft() {
-  analogWrite(IN1, 0); analogWrite(IN2, motorSpeed);
-  analogWrite(IN3, motorSpeed); analogWrite(IN4, 0);
+
+  // Left motor backward
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  // Right motor forward
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
 }
 
+
+// ============================================
+// RIGHT
+// ============================================
 void turnRight() {
-  analogWrite(IN1, motorSpeed); analogWrite(IN2, 0);
-  analogWrite(IN3, 0); analogWrite(IN4, motorSpeed);
+
+  // Left motor forward
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  // Right motor backward
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
 }
 
-void stopCar() {
-  analogWrite(IN1, 0); analogWrite(IN2, 0);
-  analogWrite(IN3, 0); analogWrite(IN4, 0);
+
+// ============================================
+// STOP
+// ============================================
+void stopMotor() {
+
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
 }
